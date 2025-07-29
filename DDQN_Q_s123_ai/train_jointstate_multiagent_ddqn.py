@@ -68,7 +68,7 @@ class ReplayBuffer:
     def __len__(self):
         return len(self.buffer)
 
-# ε-greedy action selection
+# epsilon greedy action selection
 def select_action(q_net, joint_obs, epsilon, action_space):
     if random.random() < epsilon:
         return action_space.sample()
