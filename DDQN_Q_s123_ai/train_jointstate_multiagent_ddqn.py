@@ -15,6 +15,7 @@ from mpe2 import simple_spread_v3
 from torch.utils.tensorboard import SummaryWriter
 import pdb
 import config
+import core
 
 #%%
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -30,55 +31,7 @@ if config.log_data:
     writer = SummaryWriter(log_dir=log_dir)
 
 episode_rewards = []
-#%%
-# Q-network definition
-class QNetwork(nn.Module):
-    def __init__(self, input_dim, action_dim):
-        super().__init__()
-        self.net = nn.Sequential(
-            nn.Linear(input_dim, 256),
-            nn.ReLU(),
-            nn.Linear(256, 128),
-            nn.ReLU(),
-            nn.Linear(128, action_dim)
-        )
 
-    def forward(self, x):
-        return self.net(x)
-#%%
-# Replay Buffer
-class ReplayBuffer:
-    def __init__(self, capacity):
-        self.buffer = deque(maxlen=capacity)
-
-    def push(self, joint_obs, action, reward, joint_next_obs, done):
-        self.buffer.append((joint_obs, action, reward, joint_next_obs, done))
-
-    def sample(self, batch_size):
-        batch = random.sample(self.buffer, batch_size)
-        s, a, r, s_, d = zip(*batch)
-        return (
-            torch.tensor(np.array(s), dtype=torch.float32).to(device),
-            torch.tensor(a).to(device),
-            torch.tensor(r).to(device),
-            torch.tensor(np.array(s_), dtype=torch.float32).to(device),
-            torch.tensor(d).to(device),
-        )
-
-    def __len__(self):
-        return len(self.buffer)
-#%%
-# epsilon greedy action selection
-def select_action(q_net, joint_obs, epsilon, action_space):
-    if random.random() < epsilon:
-        return action_space.sample()
-    with torch.no_grad():
-        q_vals = q_net(torch.tensor(joint_obs, dtype=torch.float32).unsqueeze(0).to(device))
-        return torch.argmax(q_vals).item()
-
-# Helper to get joint obs
-def get_joint_obs(obs_dict, agent_order):
-    return np.concatenate([obs_dict[agent] for agent in agent_order])
 #%%
 # Initialize environment
 env = simple_spread_v3.parallel_env(render_mode=None, max_cycles=config.MAX_CYCLES)
@@ -91,10 +44,10 @@ single_obs_dim = len(next(iter(obs.values())))
 joint_obs_dim = single_obs_dim * len(agents)
 
 # Q-networks, target networks, optimizers, buffers
-q_nets = {agent: QNetwork(joint_obs_dim, action_spaces[agent]).to(device) for agent in agents}
-target_nets = {agent: QNetwork(joint_obs_dim, action_spaces[agent]).to(device) for agent in agents}
+q_nets = {agent: core.QNetwork(joint_obs_dim, action_spaces[agent]).to(device) for agent in agents}
+target_nets = {agent: core.QNetwork(joint_obs_dim, action_spaces[agent]).to(device) for agent in agents}
 optimizers = {agent: optim.Adam(q_nets[agent].parameters(), lr=config.LR) for agent in agents}
-buffers = {agent: ReplayBuffer(config.REPLAY_BUFFER_SIZE) for agent in agents}
+buffers = {agent: core.ReplayBuffer(config.REPLAY_BUFFER_SIZE) for agent in agents}
 
 # Sync target nets
 for agent in agents:
@@ -108,14 +61,14 @@ for episode in range(config.NUM_EPISODES):
     total_reward = {agent: 0.0 for agent in agents}
 
     for step in range(config.MAX_CYCLES):
-        joint_obs = get_joint_obs(obs, agents)
+        joint_obs = core.get_joint_obs(obs, agents)
         actions = {}
 
         for agent in agents:
-            actions[agent] = select_action(q_nets[agent], joint_obs, epsilon, env.action_space(agent))
+            actions[agent] = core.select_action(q_nets[agent], joint_obs, epsilon, env.action_space(agent))
 
         next_obs, rewards, terminations, truncations, infos = env.step(actions)
-        joint_next_obs = get_joint_obs(next_obs, agents)
+        joint_next_obs = core.get_joint_obs(next_obs, agents)
 
         for agent in agents:
             buffers[agent].push(
@@ -156,7 +109,7 @@ for episode in range(config.NUM_EPISODES):
         print(f"Episode {episode} | Avg reward: {avg_reward:.2f} | epsilon: {epsilon:.3f}")
 
 writer.close()
-
+#%%
 # Save
 if config.save_file:
     np.save(reward_log_path, episode_rewards)
