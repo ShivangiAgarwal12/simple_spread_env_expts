@@ -7,7 +7,6 @@ import numpy as np
 import torch
 import torch.nn as nn
 import torch.optim as optim
-from collections import deque
 import random
 import os
 import matplotlib.pyplot as plt
@@ -36,13 +35,14 @@ episode_rewards = []
 # Initialize environment
 env = simple_spread_v3.parallel_env(render_mode=None, max_cycles=config.MAX_CYCLES)
 obs, _ = env.reset()
+# pdb.set_trace()
 agents = env.agents
 action_spaces = {agent: env.action_space(agent).n for agent in agents}
 
 # Observation dimensions
 single_obs_dim = len(next(iter(obs.values())))
 joint_obs_dim = single_obs_dim * len(agents)
-
+#%%initialise networks
 # Q-networks, target networks, optimizers, buffers
 q_nets = {agent: core.QNetwork(joint_obs_dim, action_spaces[agent]).to(device) for agent in agents}
 target_nets = {agent: core.QNetwork(joint_obs_dim, action_spaces[agent]).to(device) for agent in agents}
@@ -77,11 +77,11 @@ for episode in range(config.NUM_EPISODES):
             total_reward[agent] += rewards[agent]
 
         obs = next_obs
-
+        
         for agent in agents:
             if len(buffers[agent]) < config.BATCH_SIZE:
                 continue
-
+            # pdb.set_trace()
             s, a, r, s_, done = buffers[agent].sample(config.BATCH_SIZE)
             q_vals = q_nets[agent](s).gather(1, a.unsqueeze(1)).squeeze()
             # pdb.set_trace()
