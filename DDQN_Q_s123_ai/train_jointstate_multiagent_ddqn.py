@@ -66,7 +66,7 @@ for episode in range(config.NUM_EPISODES):
 
         for agent in agents:
             actions[agent] = core.select_action(q_nets[agent], joint_obs, epsilon, env.action_space(agent))
-
+        pdb.set_trace()
         next_obs, rewards, terminations, truncations, infos = env.step(actions)
         joint_next_obs = core.get_joint_obs(next_obs, agents)
 
@@ -81,7 +81,7 @@ for episode in range(config.NUM_EPISODES):
         for agent in agents:
             if len(buffers[agent]) < config.BATCH_SIZE:
                 continue
-            # pdb.set_trace()
+            pdb.set_trace()
             s, a, r, s_, done = buffers[agent].sample(config.BATCH_SIZE)
             q_vals = q_nets[agent](s).gather(1, a.unsqueeze(1)).squeeze()
             # pdb.set_trace()
