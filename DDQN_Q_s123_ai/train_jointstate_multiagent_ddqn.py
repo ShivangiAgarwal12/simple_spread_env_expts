@@ -12,11 +12,19 @@ import os
 import matplotlib.pyplot as plt
 from mpe2 import simple_spread_v3  
 from torch.utils.tensorboard import SummaryWriter
-import pdb
-import config
-import core
 
-#%%
+# Hyperparameters
+GAMMA = 0.99
+LR = 1e-4
+BATCH_SIZE = 128
+REPLAY_BUFFER_SIZE = 100_000
+TARGET_UPDATE_FREQ = 100
+EPS_START = 1.0
+EPS_END = 0.001
+EPS_DECAY = 1 #0.999 -- no decay, so epsilon stays as 1 throughout
+NUM_EPISODES = 5000
+MAX_CYCLES = 50
+
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 if config.log_data:
