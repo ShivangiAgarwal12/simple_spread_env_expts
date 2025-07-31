@@ -12,7 +12,7 @@ import torch.optim as optim
 from collections import deque
 import random
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-import pdb
+
 #%%
 # Q-network definition
 class QNetwork(nn.Module):
@@ -57,7 +57,7 @@ def select_action(q_net, joint_obs, epsilon, action_space):
         return action_space.sample()
     with torch.no_grad():
         q_vals = q_net(torch.tensor(joint_obs, dtype=torch.float32).unsqueeze(0).to(device))
-        pdb.set_trace()
+        # pdb.set_trace()
         return torch.argmax(q_vals).item()
 
 # Helper to get joint obs

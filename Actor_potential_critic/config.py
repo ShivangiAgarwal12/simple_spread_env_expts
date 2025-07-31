@@ -17,3 +17,6 @@ TAU = 0.05
 
 #%%save file
 save_file = False
+
+#samples to calculate actions
+samples_per_agent = 50

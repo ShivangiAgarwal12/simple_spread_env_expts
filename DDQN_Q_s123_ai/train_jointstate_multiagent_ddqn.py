@@ -40,11 +40,15 @@ agents = env.agents
 action_spaces = {agent: env.action_space(agent).n for agent in agents}
 
 # Observation dimensions
+# pdb.set_trace()
 single_obs_dim = len(next(iter(obs.values())))
 joint_obs_dim = single_obs_dim * len(agents)
 #%%initialise networks
 # Q-networks, target networks, optimizers, buffers
+
 q_nets = {agent: core.QNetwork(joint_obs_dim, action_spaces[agent]).to(device) for agent in agents}
+
+# pdb.set_trace()
 target_nets = {agent: core.QNetwork(joint_obs_dim, action_spaces[agent]).to(device) for agent in agents}
 optimizers = {agent: optim.Adam(q_nets[agent].parameters(), lr=config.LR) for agent in agents}
 buffers = {agent: core.ReplayBuffer(config.REPLAY_BUFFER_SIZE) for agent in agents}
@@ -66,7 +70,7 @@ for episode in range(config.NUM_EPISODES):
 
         for agent in agents:
             actions[agent] = core.select_action(q_nets[agent], joint_obs, epsilon, env.action_space(agent))
-        pdb.set_trace()
+        # pdb.set_trace()
         next_obs, rewards, terminations, truncations, infos = env.step(actions)
         joint_next_obs = core.get_joint_obs(next_obs, agents)
 

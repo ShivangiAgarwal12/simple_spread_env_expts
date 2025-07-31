@@ -27,7 +27,8 @@ single_obs_dim = len(next(iter(obs.values())))
 joint_obs_dim = single_obs_dim * len(agents)
 joint_action_dim = sum(action_dims.values())
 #%%load q network from core and train phi function
-buffer, q_nets, target_q_nets, q_opts, p_opts, potentials, target_potentials = core.load_QNetwork()
+buffer, q_nets, target_q_nets, q_opts, p_opts, potentials, target_potentials = \
+    core.load_QNetwork(agents,joint_obs_dim,action_dims,joint_action_dim )
 #%%
 # --- Training Loop ---
 episode_rewards = []

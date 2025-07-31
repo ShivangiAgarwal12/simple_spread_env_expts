@@ -1,3 +1,7 @@
+'''
+Q network and phi network
+'''
+import torch
 import torch.nn as nn
 
 class QNetwork(nn.Module):
@@ -16,15 +20,16 @@ class QNetwork(nn.Module):
 
 
 class PotentialNetwork(nn.Module):
-    def __init__(self, input_dim):
+    def __init__(self, state_dim, joint_action_dim):
         super().__init__()
         self.net = nn.Sequential(
-            nn.Linear(input_dim, 256),
+            nn.Linear(state_dim+joint_action_dim, 256),
             nn.ReLU(),
             nn.Linear(256, 128),
             nn.ReLU(),
             nn.Linear(128, 1)
         )
 
-    def forward(self, x):
-        return self.net(x)
+    def forward(self, state_dim, joint_action):
+        x = torch.cat([state_dim,joint_action], dim= -1)
+        return self.net(x).squeeze(-1)
