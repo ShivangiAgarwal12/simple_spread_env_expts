@@ -51,7 +51,7 @@ def load_QNetwork(agents, joint_obs_dim,action_dims,joint_action_dim):
     #     target_potentials[i].load_state_dict(potentials[i].state_dict())
 
     # --- Optimizers ---
-    q_opts = {agent: [optim.Adam(q.parameters(), lr=config.LR_Q) for q in q_nets[agent]] for agent in agents}
+    # q_opts = {agent: [optim.Adam(q.parameters(), lr=config.LR_Q) for q in q_nets[agent]] for agent in agents}
     # p_opts = [optim.Adam(p.parameters(), lr=config.LR_P) for p in potentials]
     # p_opts = optim.Adam(potentials.parameters(), lr=1e-3)
 
@@ -61,7 +61,7 @@ def load_QNetwork(agents, joint_obs_dim,action_dims,joint_action_dim):
     return buffer, q_nets, target_q_nets
 
 def update_q_networks_phi_network(agents, num_actions, state_dim, states,p_opts,q_nets,\
-                                  loss_accum, num_total):
+                                  loss_accum, num_total, step):
     '''
     update here both q and phi functions
 
@@ -71,6 +71,7 @@ def update_q_networks_phi_network(agents, num_actions, state_dim, states,p_opts,
 
     '''
     potential_net = PotentialNetwork(state_dim, agents)
+    target_potential = PotentialNetwork(state_dim, agents)
     for agent in range(agents):
         # define here for q function
         q_net = q_nets[agent]
@@ -119,6 +120,15 @@ def update_q_networks_phi_network(agents, num_actions, state_dim, states,p_opts,
     loss.backward()
            
     p_opts.step()
+    
+    # --- Soft updates ---
+    if step % config.TARGET_UPDATE_FREQ == 0:
+        for agent in agents:
+            for tp, p in zip(target_potential.parameters(),
+                             potential_net.parameters()):
+                tp.data.copy_(config.TAU*p.data + (1-config.TAU)*tp.data)
+                
+    return loss
            
     
     
