@@ -53,7 +53,8 @@ def load_QNetwork(agents, joint_obs_dim,action_dims,joint_action_dim):
 
     # --- Optimizers ---
     q_opts = {agent: [optim.Adam(q.parameters(), lr=config.LR_Q) for q in q_nets[agent]] for agent in agents}
-    p_opts = [optim.Adam(p.parameters(), lr=config.LR_P) for p in potentials]
+    # p_opts = [optim.Adam(p.parameters(), lr=config.LR_P) for p in potentials]
+    p_opts = optim.Adam(potentials.parameters(), lr=1e-3)
 
     # --- Replay Buffer ---
     buffer = ReplayBuffer(capacity=100000)
@@ -71,6 +72,8 @@ def update_q_networks_phi_network(agents, num_actions, state_dim, states,p_opts,
     '''
     potential_net = PotentialNetwork(state_dim, agents)
     for agent in range(agents):
+        # define here for q function
+        q_net = q_nets[agent]
         for _ in range(config.samples_per_agent):
             #sample actions
             a_i = random.randint(0,num_actions - 1)
@@ -97,7 +100,7 @@ def update_q_networks_phi_network(agents, num_actions, state_dim, states,p_opts,
             phi_a_tilde = potential_net(states, a_joint_tilde_tensor)
             
             #define here for q function
-            q_net = q_nets[agent]
+            # q_net = q_nets[agent]
             
             with torch.no_grad():
                 q_a = q_net(states, a_joint_tensor)

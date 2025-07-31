@@ -27,8 +27,15 @@ single_obs_dim = len(next(iter(obs.values())))
 joint_obs_dim = single_obs_dim * len(agents)
 joint_action_dim = sum(action_dims.values())
 #%%load q network from core and train phi function
-buffer, q_nets, target_q_nets, q_opts, p_opts, potentials, target_potentials = \
+buffer, q_nets, target_q_nets = \
     core.load_QNetwork(agents,joint_obs_dim,action_dims,joint_action_dim )
+#%%load potential function
+# potentials = [PotentialNetwork(joint_obs_dim + joint_action_dim).to(device) for _ in range(2)]
+# target_potentials = [PotentialNetwork(joint_obs_dim + joint_action_dim).to(device) for _ in range(2)]
+
+
+phi_net = PotentialNetwork(joint_obs_dim, agents).to(device)
+phi_net_optimizer = optim.Adam(phi_net.parameters(), lr=1e-3)
 #%%
 # --- Training Loop ---
 episode_rewards = []
